@@ -112,7 +112,7 @@ export {SelectInputClass, Input, TransferableInput, AmountInput, SecpInput} from
 export {AVMKeyPair, AVMKeyChain} from './apis/avm/keychain';
 export {SelectOperationClass,Operation, TransferableOperation, NFTTransferOperation} from  './apis/avm/ops';
 export {SelectOutputClass, Output, TransferableOutput, AmountOutput, SecpOutput, NFTOutBase, NFTTransferOutput} from './apis/avm/outputs';
-export {BaseTx, CreateAssetTx, OperationTx, UnsignedTx, Tx} from './apis/avm/tx';
+export {BaseTx, CreateAssetTx, OperationTx, ImportTx, ExportTx, UnsignedTx, Tx} from './apis/avm/tx';
 export {SigIdx, Signature, Address, UTXOID, InitialStates, AVMConstants, MergeRule, UnixNow} from './apis/avm/types';
 export {UTXO, UTXOSet} from './apis/avm/utxos';	
 

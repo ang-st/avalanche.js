@@ -576,6 +576,33 @@ class AVMAPI extends JRPCAPI{
         });
     }
 
+    getAtomicUTXOs = async (addresses:Array<string> | Array<Buffer>, persistOpts:PersistanceOptions = undefined ):Promise<UTXOSet> => {
+        let addrs:Array<string> = this._cleanAddressArray(addresses, "getUTXOs");
+        
+        let params = {
+            "addresses": addrs
+        };
+        return this.callMethod("avm.getAtomicUTXOs", params).then((response:RequestResponseData) => {
+            let utxos:UTXOSet = new UTXOSet();
+            let data = response.data["result"]["utxos"];
+            if(persistOpts && typeof persistOpts === 'object'){
+                if(this.db.has(persistOpts.getName())){
+                    let selfArray:Array<string> = this.db.get(persistOpts.getName());
+                    if(Array.isArray(selfArray)){
+                        utxos.addArray(data);
+                        let self:UTXOSet = new UTXOSet();
+                        self.addArray(selfArray);
+                        self.mergeByRule(utxos, persistOpts.getMergeRule())
+                        data = self.getAllUTXOStrings();
+                    }
+                }
+                this.db.set(persistOpts.getName(), data, persistOpts.getOverwrite());
+            }
+            utxos.addArray(data);
+            return utxos;
+        });
+    }
+
     /**
      * Helper function which creates an unsigned transaction. For more granular control, you may create your own
      * [[UnsignedTx]] manually (with their corresponding [[TransferableInput]]s, [[TransferableOutput]]s, and [[TransferOperation]]s).
