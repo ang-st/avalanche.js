@@ -362,4 +362,3 @@ describe('Transactions', () => {
         expect(txunew.toString()).toBe(txu.toString());
     });
 });
-    

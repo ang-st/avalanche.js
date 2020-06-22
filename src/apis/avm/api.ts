@@ -576,8 +576,18 @@ class AVMAPI extends JRPCAPI{
         });
     }
 
+    /**
+     * Retrieves the atomic UTXOs related to the addresses provided from the node's `getAtomicUTXOs` method.
+     * 
+     * @param addresses An array of addresses as strings or addresses as {@link https://github.com/feross/buffer|Buffer}s
+     * @param persistOpts Options available to persist these UTXOs in local storage
+     * 
+     * @remarks 
+     * persistOpts is optional and must be of type [[PersistanceOptions]]
+     * 
+     */
     getAtomicUTXOs = async (addresses:Array<string> | Array<Buffer>, persistOpts:PersistanceOptions = undefined ):Promise<UTXOSet> => {
-        let addrs:Array<string> = this._cleanAddressArray(addresses, "getUTXOs");
+        let addrs:Array<string> = this._cleanAddressArray(addresses, "getAtomicUTXOs");
         
         let params = {
             "addresses": addrs
