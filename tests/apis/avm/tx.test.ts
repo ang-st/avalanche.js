@@ -264,6 +264,49 @@ describe('Transactions', () => {
         expect(importtx.getImportIns().length).toBe(5);
     });
 
+    test('ImportTx', () => {
+        let txu:ImportTx = new ImportTx(netid, blockchainID, outputs, inputs, importInputs);
+        let txins:Array<TransferableInput>  = txu.getIns();
+        let txouts:Array<TransferableOutput> = txu.getOuts();
+        let tximportIns:Array<TransferableInput>  = txu.getImportIns();
+        expect(txins.length).toBe(inputs.length);
+        expect(txouts.length).toBe(outputs.length);
+        expect(tximportIns.length).toBe(importInputs.length);
+        expect(txu.getTxType()).toBe(AVMConstants.IMPORTTX);
+        expect(txu.getNetworkID()).toBe(12345);
+        expect(txu.getBlockchainID().toString("hex")).toBe(blockchainID.toString("hex"));
+        let a:Array<string> = [];
+        let b:Array<string> = [];
+        for(let i:number = 0; i < txins.length; i++){
+            a.push(txins[i].toString());
+            b.push(inputs[i].toString());
+        }
+        expect(JSON.stringify(a.sort())).toBe(JSON.stringify(b.sort()));
+        
+        a = [];
+        b = [];
+
+        for(let i:number = 0; i < txouts.length; i++){
+            a.push(txouts[i].toString());
+            b.push(outputs[i].toString());
+        }
+        expect(JSON.stringify(a.sort())).toBe(JSON.stringify(b.sort()));
+        
+        a = [];
+        b = [];
+
+        for(let i:number = 0; i < tximportIns.length; i++){
+            a.push(tximportIns[i].toString());
+            b.push(importInputs[i].toString());
+        }
+        expect(JSON.stringify(a.sort())).toBe(JSON.stringify(b.sort()));
+
+        let txunew:ImportTx = new ImportTx();
+        txunew.fromBuffer(txu.toBuffer());
+        expect(txunew.toBuffer().toString("hex")).toBe(txu.toBuffer().toString("hex"));
+        expect(txunew.toString()).toBe(txu.toString());
+    });
+
     test('Creation ExportTx', () => {
         let exporttx:ExportTx = new ExportTx(
             netid, blockchainID, outputs, inputs, exportOutputs
@@ -274,6 +317,49 @@ describe('Transactions', () => {
         expect(txunew.toBuffer().toString("hex")).toBe(exporttx.toBuffer().toString("hex"));
         expect(txunew.toString()).toBe(exporttx.toString());
         expect(exporttx.getExportOuts().length).toBe(5);
+    });
+
+    test('ExportTx', () => {
+        let txu:ExportTx = new ExportTx(netid, blockchainID, outputs, inputs, exportOutputs);
+        let txins:Array<TransferableInput>  = txu.getIns();
+        let txouts:Array<TransferableOutput> = txu.getOuts();
+        let txexportouts:Array<TransferableOutput>  = txu.getExportOuts();
+        expect(txins.length).toBe(inputs.length);
+        expect(txouts.length).toBe(outputs.length);
+        expect(txexportouts.length).toBe(exportOutputs.length);
+        expect(txu.getTxType()).toBe(AVMConstants.EXPORTTX);
+        expect(txu.getNetworkID()).toBe(12345);
+        expect(txu.getBlockchainID().toString("hex")).toBe(blockchainID.toString("hex"));
+        let a:Array<string> = [];
+        let b:Array<string> = [];
+        for(let i:number = 0; i < txins.length; i++){
+            a.push(txins[i].toString());
+            b.push(inputs[i].toString());
+        }
+        expect(JSON.stringify(a.sort())).toBe(JSON.stringify(b.sort()));
+        
+        a = [];
+        b = [];
+
+        for(let i:number = 0; i < txouts.length; i++){
+            a.push(txouts[i].toString());
+            b.push(outputs[i].toString());
+        }
+        expect(JSON.stringify(a.sort())).toBe(JSON.stringify(b.sort()));
+        
+        a = [];
+        b = [];
+
+        for(let i:number = 0; i < txexportouts.length; i++){
+            a.push(txexportouts[i].toString());
+            b.push(exportOutputs[i].toString());
+        }
+        expect(JSON.stringify(a.sort())).toBe(JSON.stringify(b.sort()));
+
+        let txunew:ExportTx = new ExportTx();
+        txunew.fromBuffer(txu.toBuffer());
+        expect(txunew.toBuffer().toString("hex")).toBe(txu.toBuffer().toString("hex"));
+        expect(txunew.toString()).toBe(txu.toString());
     });
 });
     
