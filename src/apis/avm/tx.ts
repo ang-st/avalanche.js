@@ -456,6 +456,35 @@ export class ImportTx extends BaseTx {
     }
 
     /**
+     * Returns an array of [[TransferableInput]]s in this transaction.
+     */
+    getImportIns():Array<TransferableInput> {
+        return this.importIns;
+    }
+
+    /**
+     * Takes a {@link https://github.com/feross/buffer|Buffer} containing an [[ImportTx]], parses it, populates the class, and returns the length of the [[ImportTx]] in bytes.
+     * 
+     * @param bytes A {@link https://github.com/feross/buffer|Buffer} containing a raw [[ImportTx]]
+     * 
+     * @returns The length of the raw [[ImportTx]]
+     * 
+     * @remarks assume not-checksummed
+     */
+    fromBuffer(bytes:Buffer, offset:number = 0):number {
+        offset = super.fromBuffer(bytes, offset);
+        this.numImportOuts = bintools.copyFrom(bytes, offset, offset + 4);
+        offset += 4;
+        let numImportOuts:number = this.numImportOuts.readUInt32BE(0);
+        for(let i:number = 0; i < numImportOuts; i++) {
+            let importIn:TransferableInput = new TransferableInput();
+            offset = importIn.fromBuffer(bytes, offset);
+            this.importIns.push(importIn);
+        }
+        return offset;
+    }
+
+    /**
      * Returns a {@link https://github.com/feross/buffer|Buffer} representation of the [[ImportTx]].
      */
     toBuffer():Buffer {
@@ -467,6 +496,15 @@ export class ImportTx extends BaseTx {
         return Buffer.concat(barr);
     }
 
+
+    /**
+     * Takes the bytes of an [[UnsignedTx]] and returns an array of [[Credential]]s
+     * 
+     * @param msg A Buffer for the [[UnsignedTx]] 
+     * @param kc An [[AVMKeyChain]] used in signing
+     * 
+     * @returns An array of [[Credential]]s
+     */
     sign(msg:Buffer, kc:AVMKeyChain):Array<Credential> {
         let sigs:Array<Credential> = super.sign(msg, kc);
         for(let i:number = 0; i < this.importIns.length; i++) {
@@ -521,6 +559,35 @@ export class ExportTx extends BaseTx {
      */
     getTxType():number {
         return AVMConstants.EXPORTTX;
+    }
+
+    /**
+     * Returns an array of [[TransferableOutput]]s in this transaction.
+     */
+    getExportOuts():Array<TransferableOutput> {
+        return this.exportOuts;
+    }
+
+    /**
+     * Takes a {@link https://github.com/feross/buffer|Buffer} containing an [[ExportTx]], parses it, populates the class, and returns the length of the [[ExportTx]] in bytes.
+     * 
+     * @param bytes A {@link https://github.com/feross/buffer|Buffer} containing a raw [[ExportTx]]
+     * 
+     * @returns The length of the raw [[ExportTx]]
+     * 
+     * @remarks assume not-checksummed
+     */
+    fromBuffer(bytes:Buffer, offset:number = 0):number {
+        offset = super.fromBuffer(bytes, offset);
+        this.numExportOuts = bintools.copyFrom(bytes, offset, offset + 4);
+        offset += 4;
+        let numExportOuts:number = this.numExportOuts.readUInt32BE(0);
+        for(let i:number = 0; i < numExportOuts; i++) {
+            let exportOut:TransferableOutput = new TransferableOutput();
+            offset = exportOut.fromBuffer(bytes, offset);
+            this.exportOuts.push(exportOut);
+        }
+        return offset;
     }
 
     /**

@@ -1,5 +1,5 @@
 import { UTXOSet, UTXO } from 'src/apis/avm/utxos';
-import { BaseTx, CreateAssetTx, OperationTx, UnsignedTx, Tx } from 'src/apis/avm/tx';
+import { BaseTx, CreateAssetTx, OperationTx, UnsignedTx, Tx, ImportTx, ExportTx } from 'src/apis/avm/tx';
 import { AVMKeyChain } from 'src/apis/avm/keychain';
 import { SecpInput, TransferableInput } from 'src/apis/avm/inputs';
 import createHash from 'create-hash';
@@ -24,7 +24,9 @@ describe('Transactions', () => {
     let addrs3:Array<Buffer>;
     let utxos:Array<UTXO>;
     let inputs:Array<TransferableInput>;
+    let importInputs:Array<TransferableInput>;
     let outputs:Array<TransferableOutput>;
+    let exportOutputs:Array<TransferableOutput>;
     let ops:Array<TransferableOperation>;
     const amnt:number = 10000;
     let netid:number = 12345;
@@ -50,7 +52,9 @@ describe('Transactions', () => {
         addrs3 = [];
         utxos = [];
         inputs = [];
+        importInputs = [];
         outputs = [];
+        exportOutputs = [];
         ops = [];
         for(let i:number = 0; i < 3; i++){
             addrs1.push(keymgr1.makeKey());
@@ -75,6 +79,7 @@ describe('Transactions', () => {
             let out:SecpOutput = new SecpOutput(amount, locktime, threshold, addresses);
             let xferout:TransferableOutput = new TransferableOutput(assetID, out);
             outputs.push(xferout);
+            exportOutputs.push(xferout);
 
             let u:UTXO = new UTXO(txid, txidx, assetID, out);
             utxos.push(u);
@@ -85,6 +90,7 @@ describe('Transactions', () => {
             let input:SecpInput = new SecpInput(amount);
             let xferin:TransferableInput = new TransferableInput(txid, txidx, assetID, input);
             inputs.push(xferin);
+            importInputs.push(xferin);
 
             let nout:NFTTransferOutput = new NFTTransferOutput(1000 + i, payload, locktime, threshold, addresses);
             let op:NFTTransferOperation = new NFTTransferOperation(nout);
@@ -195,7 +201,6 @@ describe('Transactions', () => {
     });
 
     test('Creation OperationTx', () => {
-        
         let optx:OperationTx = new OperationTx(
             netid, blockchainID, outputs, inputs, ops
         );
@@ -247,5 +252,28 @@ describe('Transactions', () => {
         expect(tx2.toString()).toBe(tx.toString());
     });
 
+    test('Creation ImportTx', () => {
+        let importtx:ImportTx = new ImportTx(
+            netid, blockchainID, outputs, inputs, importInputs
+        );
+        let txunew:ImportTx = new ImportTx();
+        let importbuff:Buffer = importtx.toBuffer();
+        txunew.fromBuffer(importbuff);
+        expect(txunew.toBuffer().toString("hex")).toBe(importtx.toBuffer().toString("hex"));
+        expect(txunew.toString()).toBe(importtx.toString());
+        expect(importtx.getImportIns().length).toBe(5);
+    });
+
+    test('Creation ExportTx', () => {
+        let exporttx:ExportTx = new ExportTx(
+            netid, blockchainID, outputs, inputs, exportOutputs
+        );
+        let txunew:ExportTx = new ExportTx();
+        let exportbuff:Buffer = exporttx.toBuffer();
+        txunew.fromBuffer(exportbuff);
+        expect(txunew.toBuffer().toString("hex")).toBe(exporttx.toBuffer().toString("hex"));
+        expect(txunew.toString()).toBe(exporttx.toString());
+        expect(exporttx.getExportOuts().length).toBe(5);
+    });
 });
     
