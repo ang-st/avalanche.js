@@ -266,9 +266,9 @@ describe('Transactions', () => {
 
     test('ImportTx', () => {
         let txu:ImportTx = new ImportTx(netid, blockchainID, outputs, inputs, importInputs);
-        let txins:Array<TransferableInput>  = txu.getIns();
+        let txins:Array<TransferableInput> = txu.getIns();
         let txouts:Array<TransferableOutput> = txu.getOuts();
-        let tximportIns:Array<TransferableInput>  = txu.getImportIns();
+        let tximportIns:Array<TransferableInput> = txu.getImportIns();
         expect(txins.length).toBe(inputs.length);
         expect(txouts.length).toBe(outputs.length);
         expect(tximportIns.length).toBe(importInputs.length);
@@ -321,9 +321,9 @@ describe('Transactions', () => {
 
     test('ExportTx', () => {
         let txu:ExportTx = new ExportTx(netid, blockchainID, outputs, inputs, exportOutputs);
-        let txins:Array<TransferableInput>  = txu.getIns();
+        let txins:Array<TransferableInput> = txu.getIns();
         let txouts:Array<TransferableOutput> = txu.getOuts();
-        let txexportouts:Array<TransferableOutput>  = txu.getExportOuts();
+        let txexportouts:Array<TransferableOutput> = txu.getExportOuts();
         expect(txins.length).toBe(inputs.length);
         expect(txouts.length).toBe(outputs.length);
         expect(txexportouts.length).toBe(exportOutputs.length);
