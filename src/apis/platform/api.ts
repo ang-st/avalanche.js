@@ -233,7 +233,6 @@ class PlatformAPI extends JRPCAPI{
     addNonDefaultSubnetValidator = async (id:string, subnetID:Buffer | string, startTime:Date, endTime:Date, weight:number, payerNonce:number):Promise<string> => {
         let params = {
             "id": id,
-            "subnet": subnetID,
             "startTime": startTime.getTime()/1000,
             "endTime": endTime.getTime()/1000,
             "weight": weight,
@@ -356,7 +355,7 @@ class PlatformAPI extends JRPCAPI{
     exportAVA = async (amount:BN, to:string,payerNonce:number):Promise<string> => {
         let params = {
             "to": to,
-            "amount": amount,
+            "amount": amount.toString(10),
             "payerNonce": payerNonce
         }
         return this.callMethod("platform.exportAVA", params).then((response:RequestResponseData) => {
