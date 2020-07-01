@@ -632,19 +632,19 @@ export class UTXOSet {
         let ins:Array<TransferableInput> = [];
         let outs:Array<TransferableOutput> = [];
         let importIns:Array<TransferableInput> = [];
-        const changeAmt: BN = new BN(amount)
-        const changeOutput: SecpOutput = new SecpOutput(changeAmt, new BN(0), 1, toAddresses)
-        const changeTransferableOutput: TransferableOutput = new TransferableOutput(avaAssetID, changeOutput)
+        let changeAmt:BN = new BN(amount)
+        let changeOutput:SecpOutput = new SecpOutput(changeAmt, new BN(0), 1, toAddresses)
+        let changeTransferableOutput: TransferableOutput = new TransferableOutput(avaAssetID, changeOutput)
         outs.push(changeTransferableOutput)
-        const utxos: UTXO[] = this.getAllUTXOs();
-        const utxo: UTXO = utxos[0];
-        const amt: BN = new BN(amount);
-        const input: SecpInput = new SecpInput(amt);
+        let utxos:Array<UTXO> = this.getAllUTXOs();
+        let utxo:UTXO = utxos[0];
+        let amt:BN = new BN(amount);
+        let input:SecpInput = new SecpInput(amt);
         input.addSignatureIdx(0, toAddresses[0]);
-        const transferableInput: TransferableInput = new TransferableInput(utxo.getTxID(), utxo.getOutputIdx(), avaAssetID, input);
+        let transferableInput:TransferableInput = new TransferableInput(utxo.getTxID(), utxo.getOutputIdx(), avaAssetID, input);
         importIns.push(transferableInput);
       
-        const importTx: ImportTx = new ImportTx(networkid, blockchainid, outs, ins, importIns)
+        let importTx:ImportTx = new ImportTx(networkid, blockchainid, outs, ins, importIns)
         return new UnsignedTx(importTx);
     }
 
