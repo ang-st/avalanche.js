@@ -732,6 +732,20 @@ class AVMAPI extends JRPCAPI{
         );
     }
 
+    buildExportTx = async (
+        utxoset:UTXOSet, amount:BN, fromAddresses:Array<string>|Array<Buffer>,
+        toAddress:Array<string>|Array<Buffer>, changeAddresses:Array<string>|Array<Buffer>
+    ):Promise<UnsignedTx> => {
+        let from:Array<Buffer> = this._cleanAddressArray(fromAddresses, "buildExportTx").map(a => bintools.stringToAddress(a));
+        let to:Array<Buffer> = this._cleanAddressArray(toAddress, "buildExportTx").map(a => bintools.stringToAddress(a));
+        let change:Array<Buffer> = this._cleanAddressArray(changeAddresses, "buildExportTx").map(a => bintools.stringToAddress(a));
+        let avaAssetID:Buffer = await this.getAVAAssetID();
+        return utxoset.buildExportTx(
+            this.core.getNetworkID(), bintools.avaDeserialize(this.blockchainID), avaAssetID,
+            amount, from, to, change
+        );
+    }
+
     /**
      * Helper function which takes an unsigned transaction and signs it, returning the resulting [[Tx]].
      * 

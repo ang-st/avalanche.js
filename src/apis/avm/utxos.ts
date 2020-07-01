@@ -5,9 +5,9 @@
 import {Buffer} from "buffer/";
 import BinTools from '../../utils/bintools';
 import BN from "bn.js";
-import { Output, AmountOutput, SelectOutputClass, TransferableOutput, NFTTransferOutput } from './outputs';
+import { Output, AmountOutput, SelectOutputClass, TransferableOutput, NFTTransferOutput, SecpOutput } from './outputs';
 import { MergeRule, UnixNow, AVMConstants, InitialStates } from './types';
-import { UnsignedTx, CreateAssetTx, OperationTx, BaseTx } from './tx';
+import { UnsignedTx, CreateAssetTx, OperationTx, BaseTx, ExportTx } from './tx';
 import { SecpInput, TransferableInput } from './inputs';
 import { NFTTransferOperation, TransferableOperation } from './ops';
 
@@ -609,6 +609,22 @@ export class UTXOSet {
         }
         let OpTx:OperationTx = new OperationTx(networkid, blockchainid, outs, ins, ops);
         return new UnsignedTx(OpTx);
+    }
+
+    buildExportTx = (
+        networkid:number, blockchainid:Buffer, avaAssetID:Buffer, 
+        amount:BN, fromAddresses:Array<Buffer>, 
+        toAddresses:Array<Buffer>, changeAddresses:Array<Buffer>
+
+    ):UnsignedTx => {
+        let utx:UnsignedTx = this.buildBaseTx(networkid, blockchainid, amount, toAddresses, fromAddresses, changeAddresses, avaAssetID);
+        let ins:Array<TransferableInput> = utx.getTransaction().getIns();
+        let outs:Array<TransferableOutput> = utx.getTransaction().getOuts();
+        let exportOuts:TransferableOutput[] = [outs.shift()];
+      
+        // Output to P Address
+        let exporttx:ExportTx = new ExportTx(networkid, blockchainid, outs, ins, exportOuts);
+        return new UnsignedTx(exporttx);
     }
 
     /**
