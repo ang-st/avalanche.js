@@ -7,7 +7,7 @@ import BinTools from '../../utils/bintools';
 import BN from "bn.js";
 import { Output, AmountOutput, SelectOutputClass, TransferableOutput, NFTTransferOutput, SecpOutput } from './outputs';
 import { MergeRule, UnixNow, AVMConstants, InitialStates } from './types';
-import { UnsignedTx, CreateAssetTx, OperationTx, BaseTx, ExportTx } from './tx';
+import { UnsignedTx, CreateAssetTx, OperationTx, BaseTx, ExportTx, ImportTx } from './tx';
 import { SecpInput, TransferableInput } from './inputs';
 import { NFTTransferOperation, TransferableOperation } from './ops';
 
@@ -621,10 +621,31 @@ export class UTXOSet {
         let ins:Array<TransferableInput> = utx.getTransaction().getIns();
         let outs:Array<TransferableOutput> = utx.getTransaction().getOuts();
         let exportOuts:TransferableOutput[] = [outs.shift()];
-      
-        // Output to P Address
         let exporttx:ExportTx = new ExportTx(networkid, blockchainid, outs, ins, exportOuts);
         return new UnsignedTx(exporttx);
+    }
+
+    buildImportTx = (
+        networkid:number, blockchainid:Buffer, avaAssetID:Buffer, fee: BN, amount: BN,
+        fromAddresses:Array<Buffer>, toAddresses:Array<Buffer>, changeAddresses:Array<Buffer>, utxoids:Array<string>
+    ):UnsignedTx => {
+        let ins:Array<TransferableInput> = [];
+        let outs:Array<TransferableOutput> = [];
+        let importIns:Array<TransferableInput> = [];
+        const changeAmt: BN = new BN(amount)
+        const changeOutput: SecpOutput = new SecpOutput(changeAmt, new BN(0), 1, toAddresses)
+        const changeTransferableOutput: TransferableOutput = new TransferableOutput(avaAssetID, changeOutput)
+        outs.push(changeTransferableOutput)
+        const utxos: UTXO[] = this.getAllUTXOs();
+        const utxo: UTXO = utxos[0];
+        const amt: BN = new BN(amount);
+        const input: SecpInput = new SecpInput(amt);
+        input.addSignatureIdx(0, toAddresses[0]);
+        const transferableInput: TransferableInput = new TransferableInput(utxo.getTxID(), utxo.getOutputIdx(), avaAssetID, input);
+        importIns.push(transferableInput);
+      
+        const importTx: ImportTx = new ImportTx(networkid, blockchainid, outs, ins, importIns)
+        return new UnsignedTx(importTx);
     }
 
     /**

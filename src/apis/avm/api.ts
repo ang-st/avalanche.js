@@ -746,6 +746,33 @@ class AVMAPI extends JRPCAPI{
         );
     }
 
+    buildImportTx = async (
+        utxoset:UTXOSet, utxoid:string | Array<string>, fromAddresses:Array<string>|Array<Buffer>, fee: BN,
+        amount: BN, toAddress:Array<string>|Array<Buffer>, changeAddress:Array<string>|Array<Buffer>
+    ):Promise<UnsignedTx> => {
+        let from:Array<Buffer> = this._cleanAddressArray(fromAddresses, "buildImportTx").map(a => bintools.stringToAddress(a));
+        let to:Array<Buffer> = this._cleanAddressArray(toAddress, "buildImportTx").map(a => bintools.stringToAddress(a));
+        let change:Array<Buffer> = this._cleanAddressArray(changeAddress, "buildImportTx").map(a => bintools.stringToAddress(a));
+        let avaAssetID:Buffer = await this.getAVAAssetID();
+
+        let utxoidArray:Array<string> = [];
+        if(typeof utxoid === 'string') {
+            utxoidArray = [utxoid];
+        } else if(Array.isArray(utxoid)) {
+            utxoidArray = utxoid;
+        }
+
+        if(fee > amount){
+            /* istanbul ignore next */
+            throw new Error("Error - avm.buildImportTx: fee is greater than amount");
+        }
+
+        return utxoset.buildImportTx(
+            this.core.getNetworkID(), bintools.avaDeserialize(this.blockchainID), avaAssetID,
+            fee, amount, from, to, change, utxoidArray
+        );
+    }
+
     /**
      * Helper function which takes an unsigned transaction and signs it, returning the resulting [[Tx]].
      * 
