@@ -692,7 +692,6 @@ class AVMAPI extends JRPCAPI{
             feeAmount, feeAddrs, to, from, utxoidArray, asOf, locktime, threshold
         );
     }
-
     
     /**
      * Creates an unsigned transaction. For more granular control, you may create your own
@@ -732,44 +731,70 @@ class AVMAPI extends JRPCAPI{
         );
     }
 
-    buildExportTx = async (
-        utxoset:UTXOSet, amount:BN, fromAddresses:Array<string>|Array<Buffer>,
-        toAddress:Array<string>|Array<Buffer>, changeAddresses:Array<string>|Array<Buffer>
-    ):Promise<UnsignedTx> => {
-        let from:Array<Buffer> = this._cleanAddressArray(fromAddresses, "buildExportTx").map(a => bintools.stringToAddress(a));
-        let to:Array<Buffer> = this._cleanAddressArray(toAddress, "buildExportTx").map(a => bintools.stringToAddress(a));
-        let change:Array<Buffer> = this._cleanAddressArray(changeAddresses, "buildExportTx").map(a => bintools.stringToAddress(a));
-        let avaAssetID:Buffer = await this.getAVAAssetID();
-        return utxoset.buildExportTx(
-            this.core.getNetworkID(), bintools.avaDeserialize(this.blockchainID), avaAssetID,
-            amount, from, to, change
-        );
-    }
-
+    /**
+     * Creates an unsigned transaction. For more granular control, you may create your own
+     * [[UnsignedTx]] manually (with their corresponding [[TransferableInput]]s, [[TransferableOutput]]s, and [[TransferOperation]]s).
+     * 
+     * @param utxoset A set of UTXOs that the transaction is built on
+     * @param feeAddresses The addresses being used to pay the fee for the transaction
+     * @param fee The amount of AVA to be paid for fees, in $nAVA
+     * @param amount The amount of AVA to be import, in $nAVA
+     * @param toAddress The address to import the funds to
+     * @param changeAddresses The addresses to send the change
+     * 
+     * @returns An unsigned transaction ([[UnsignedTx]]) which contains a [[ImportTx]].
+     * 
+     */
     buildImportTx = async (
-        utxoset:UTXOSet, utxoid:string | Array<string>, fromAddresses:Array<string>|Array<Buffer>, fee: BN,
-        amount: BN, toAddress:Array<string>|Array<Buffer>, changeAddress:Array<string>|Array<Buffer>
+        utxoset:UTXOSet, feeAddresses:Array<string>|Array<Buffer>, fee: BN,
+        amount: BN, toAddress:Array<string>|Array<Buffer>, changeAddresses:Array<string>|Array<Buffer>
     ):Promise<UnsignedTx> => {
-        let from:Array<Buffer> = this._cleanAddressArray(fromAddresses, "buildImportTx").map(a => bintools.stringToAddress(a));
+        let feeAddrs:Array<Buffer> = this._cleanAddressArray(feeAddresses, "buildImportTx").map(a => bintools.stringToAddress(a));
         let to:Array<Buffer> = this._cleanAddressArray(toAddress, "buildImportTx").map(a => bintools.stringToAddress(a));
-        let change:Array<Buffer> = this._cleanAddressArray(changeAddress, "buildImportTx").map(a => bintools.stringToAddress(a));
+        let change:Array<Buffer> = this._cleanAddressArray(changeAddresses, "buildImportTx").map(a => bintools.stringToAddress(a));
         let avaAssetID:Buffer = await this.getAVAAssetID();
-
-        let utxoidArray:Array<string> = [];
-        if(typeof utxoid === 'string') {
-            utxoidArray = [utxoid];
-        } else if(Array.isArray(utxoid)) {
-            utxoidArray = utxoid;
-        }
 
         if(fee > amount){
             /* istanbul ignore next */
-            throw new Error("Error - avm.buildImportTx: fee is greater than amount");
+            throw new Error("Error - avm.buildImportTx: `fee` cannot exceed `amount`");
         }
 
         return utxoset.buildImportTx(
             this.core.getNetworkID(), bintools.avaDeserialize(this.blockchainID), avaAssetID,
-            fee, amount, from, to, change, utxoidArray
+            fee, amount, feeAddrs, to, change
+        );
+    }
+
+    /**
+     * Creates an unsigned transaction. For more granular control, you may create your own
+     * [[UnsignedTx]] manually (with their corresponding [[TransferableInput]]s, [[TransferableOutput]]s, and [[TransferOperation]]s).
+     * 
+     * @param utxoset A set of UTXOs that the transaction is built on
+     * @param fee The amount of AVA to be paid for fees, in $nAVA
+     * @param amount The amount of AVA to be import, in $nAVA
+     * @param fromAddresses The addresses which are exporting the AVAX
+     * @param toAddress The P Chain address to import the funds to
+     * @param changeAddresses The addresses to send the change
+     * 
+     * @returns An unsigned transaction ([[UnsignedTx]]) which contains a [[ExportTx]].
+     * 
+     */
+    buildExportTx = async (
+        utxoset:UTXOSet, fee:BN, amount:BN, fromAddresses:Array<string>|Array<Buffer>,
+        toAddress:string, changeAddresses:Array<string>|Array<Buffer>
+    ):Promise<UnsignedTx> => {
+        let from:Array<Buffer> = this._cleanAddressArray(fromAddresses, "buildExportTx").map(a => bintools.stringToAddress(a));
+        let to:Array<Buffer> = this._cleanAddressArray([toAddress], "buildExportTx").map(a => bintools.stringToAddress(a));
+        let change:Array<Buffer> = this._cleanAddressArray(changeAddresses, "buildExportTx").map(a => bintools.stringToAddress(a));
+        let avaAssetID:Buffer = await this.getAVAAssetID();
+
+        if(fee > amount){
+            /* istanbul ignore next */
+            throw new Error("Error - avm.buildExportTx: `fee` cannot exceed `amount`");
+        }
+        return utxoset.buildExportTx(
+            this.core.getNetworkID(), bintools.avaDeserialize(this.blockchainID), avaAssetID,
+            fee, amount, from, to, change
         );
     }
 

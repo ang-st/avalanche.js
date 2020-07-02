@@ -611,11 +611,25 @@ export class UTXOSet {
         return new UnsignedTx(OpTx);
     }
 
+    /**
+     * Creates an unsigned transaction. For more granular control, you may create your own
+     * [[TxCreateAsset]] manually (with their corresponding [[TransferableInput]]s, [[TransferableOutput]]s).
+     * 
+     * @param networkid The number representing NetworkID of the node
+     * @param blockchainid The {@link https://github.com/feross/buffer|Buffer} representing the BlockchainID for the transaction
+     * @param fee The amount of AVA to be paid for fees, in $nAVA
+     * @param amount The amount of AVA to export in $nAVA
+     * @param fromAddresses The addresses being used to spend the funds from the utxos
+     * @param toAddresses The addresses to send the funds
+     * @param changeAddresses The addresses that can spend the change remaining from the spent UTXOs
+     * 
+     * @returns An unsigned transaction created from the passed in parameters.
+     * 
+     */
     buildExportTx = (
         networkid:number, blockchainid:Buffer, avaAssetID:Buffer, 
-        amount:BN, fromAddresses:Array<Buffer>, 
+        fee:BN, amount:BN, fromAddresses:Array<Buffer>, 
         toAddresses:Array<Buffer>, changeAddresses:Array<Buffer>
-
     ):UnsignedTx => {
         let utx:UnsignedTx = this.buildBaseTx(networkid, blockchainid, amount, toAddresses, fromAddresses, changeAddresses, avaAssetID);
         let ins:Array<TransferableInput> = utx.getTransaction().getIns();
@@ -625,27 +639,32 @@ export class UTXOSet {
         return new UnsignedTx(exporttx);
     }
 
+    /**
+     * Creates an unsigned transaction. For more granular control, you may create your own
+     * [[TxCreateAsset]] manually (with their corresponding [[TransferableInput]]s, [[TransferableOutput]]s).
+     * 
+     * @param networkid The number representing NetworkID of the node
+     * @param blockchainid The {@link https://github.com/feross/buffer|Buffer} representing the BlockchainID for the transaction
+     * @param feeAssetID The assetID for the AVA fee to be paid
+     * @param fee The amount of AVA to be paid for fees, in $nAVA
+     * @param amount The amount of AVA to export in $nAVA
+     * @param fromAddresses The addresses being used to spend the funds from the utxos
+     * @param toAddresses The addresses to send the funds
+     * @param changeAddresses The addresses that can spend the change remaining from the spent UTXOs
+     * 
+     * @returns An unsigned transaction created from the passed in parameters.
+     * 
+     */
     buildImportTx = (
         networkid:number, blockchainid:Buffer, avaAssetID:Buffer, fee: BN, amount: BN,
-        fromAddresses:Array<Buffer>, toAddresses:Array<Buffer>, changeAddresses:Array<Buffer>, utxoids:Array<string>
+        feeAddresses:Array<Buffer>, toAddresses:Array<Buffer>, changeAddresses:Array<Buffer>
     ):UnsignedTx => {
-        let ins:Array<TransferableInput> = [];
-        let outs:Array<TransferableOutput> = [];
-        let importIns:Array<TransferableInput> = [];
-        let changeAmt:BN = new BN(amount)
-        let changeOutput:SecpOutput = new SecpOutput(changeAmt, new BN(0), 1, toAddresses)
-        let changeTransferableOutput: TransferableOutput = new TransferableOutput(avaAssetID, changeOutput)
-        outs.push(changeTransferableOutput)
-        let utxos:Array<UTXO> = this.getAllUTXOs();
-        let utxo:UTXO = utxos[0];
-        let amt:BN = new BN(amount);
-        let input:SecpInput = new SecpInput(amt);
-        input.addSignatureIdx(0, toAddresses[0]);
-        let transferableInput:TransferableInput = new TransferableInput(utxo.getTxID(), utxo.getOutputIdx(), avaAssetID, input);
-        importIns.push(transferableInput);
-      
-        let importTx:ImportTx = new ImportTx(networkid, blockchainid, outs, ins, importIns)
-        return new UnsignedTx(importTx);
+        let utx:UnsignedTx = this.buildBaseTx(networkid, blockchainid, amount, toAddresses, feeAddresses, changeAddresses, avaAssetID);
+        let ins:Array<TransferableInput> = utx.getTransaction().getIns();
+        let outs:Array<TransferableOutput> = utx.getTransaction().getOuts();
+        let importOuts:TransferableInput[] = [ins.shift()];
+        let importtx:ImportTx = new ImportTx(networkid, blockchainid, outs, ins, importOuts);
+        return new UnsignedTx(importtx);
     }
 
     /**
