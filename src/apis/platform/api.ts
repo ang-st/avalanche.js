@@ -7,6 +7,7 @@ import { JRPCAPI, RequestResponseData } from '../../utils/types';
 import { Buffer } from "buffer/";
 import BN from "bn.js";
 import BinTools from '../../utils/bintools';
+import { PlatformKeyChain } from './keychain';
 
 /**
  * @ignore
@@ -21,6 +22,19 @@ const bintools = BinTools.getInstance();
  * @remarks This extends the [[JRPCAPI]] class. This class should not be directly called. Instead, use the [[Avalanche.addAPI]] function to register this interface with Avalanche.
  */ 
 class PlatformAPI extends JRPCAPI{
+    /**
+     * @ignore
+     */
+    protected keychain:PlatformKeyChain = new PlatformKeyChain("P");
+
+    /**
+     * Gets a reference to the keychain for this class.
+     * 
+     * @returns The instance of [[PlatformKeyChain]] for this class
+     */
+    keyChain = ():PlatformKeyChain => {
+        return this.keychain;
+    }
 
     /**
      * Creates a new blockchain.
