@@ -45,10 +45,10 @@ export class PlatformKeyPair extends KeyPair {
      * @ignore
      */
     protected _sigFromSigBuffer = (sig:Buffer):elliptic.ec.SignatureOptions => {
-        let r = new BN(bintools.copyFrom(sig, 0, 32));
-        let s = new BN(bintools.copyFrom(sig, 32, 64));
-        let recoveryParam:number = bintools.copyFrom(sig, 64, 65).readUIntBE(0, 1);
-        let sigOpt = {
+        const r = new BN(bintools.copyFrom(sig, 0, 32));
+        const s = new BN(bintools.copyFrom(sig, 32, 64));
+        const recoveryParam:number = bintools.copyFrom(sig, 64, 65).readUIntBE(0, 1);
+        const sigOpt = {
             r:r,
             s:s,
             recoveryParam:recoveryParam
@@ -100,7 +100,7 @@ export class PlatformKeyPair extends KeyPair {
      * @returns A string representation of the address
      */
     getAddressString = ():string => {
-        let addr:Buffer = this.addressFromPublicKey(this.pubk);
+        const addr:Buffer = this.addressFromPublicKey(this.pubk);
         return bintools.addressToString(this.chainid, addr);
     }
 
@@ -117,8 +117,8 @@ export class PlatformKeyPair extends KeyPair {
             pubk = Buffer.from(ec.keyFromPublic(pubk).getPublic(true, "hex"), "hex"); //make compact, stick back into buffer
         } 
         if(pubk.length == 33){
-            let sha256:Buffer = Buffer.from(createHash('sha256').update(pubk).digest());
-            let ripesha:Buffer = Buffer.from(createHash('rmd160').update(sha256).digest());
+            const sha256:Buffer = Buffer.from(createHash('sha256').update(pubk).digest());
+            const ripesha:Buffer = Buffer.from(createHash('rmd160').update(sha256).digest());
             return ripesha;
         }
         /* istanbul ignore next */
@@ -143,6 +143,7 @@ export class PlatformKeyPair extends KeyPair {
         return bintools.avaSerialize(this.pubk);
     }
 
+
     /**
      * Takes a message, signs it, and returns the signature.
      * 
@@ -151,12 +152,12 @@ export class PlatformKeyPair extends KeyPair {
      * @returns A {@link https://github.com/feross/buffer|Buffer} containing the signature
      */
     sign = (msg:Buffer):Buffer => {
-        let sigObj = this.keypair.sign(msg, undefined, { canonical: true });
-        let recovery:Buffer = Buffer.alloc(1);
+        const sigObj = this.keypair.sign(msg, undefined, { canonical: true });
+        const recovery:Buffer = Buffer.alloc(1);
         recovery.writeUInt8(sigObj.recoveryParam, 0);
-        let r:Buffer = Buffer.from(sigObj.r.toArray("be", 32)); //we have to skip native Buffer class, so this is the way
-        let s:Buffer = Buffer.from(sigObj.s.toArray("be", 32)); //we have to skip native Buffer class, so this is the way
-        let result:Buffer = Buffer.concat([r,s, recovery], 65);
+        const r:Buffer = Buffer.from(sigObj.r.toArray("be", 32)); //we have to skip native Buffer class, so this is the way
+        const s:Buffer = Buffer.from(sigObj.s.toArray("be", 32)); //we have to skip native Buffer class, so this is the way
+        const result:Buffer = Buffer.concat([r,s, recovery], 65);
         return result;
     }
     
@@ -169,7 +170,7 @@ export class PlatformKeyPair extends KeyPair {
      * @returns True on success, false on failure
      */
     verify = (msg:Buffer, sig:Buffer):boolean => { 
-        let sigObj:elliptic.ec.SignatureOptions = this._sigFromSigBuffer(sig);
+        const sigObj:elliptic.ec.SignatureOptions = this._sigFromSigBuffer(sig);
         return ec.verify(msg, sigObj, this.keypair);
     }
 
@@ -182,8 +183,8 @@ export class PlatformKeyPair extends KeyPair {
      * @returns A {@link https://github.com/feross/buffer|Buffer} containing the public key of the signer
      */
     recover = (msg:Buffer, sig:Buffer):Buffer => {
-        let sigObj:elliptic.ec.SignatureOptions = this._sigFromSigBuffer(sig);
-        let pubk = ec.recoverPubKey(msg, sigObj, sigObj.recoveryParam);
+        const sigObj:elliptic.ec.SignatureOptions = this._sigFromSigBuffer(sig);
+        const pubk = ec.recoverPubKey(msg, sigObj, sigObj.recoveryParam);
         return Buffer.from(pubk.encodeCompressed());
     }
 

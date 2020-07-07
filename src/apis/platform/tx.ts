@@ -4,10 +4,10 @@
  */
 import {Buffer} from "buffer/";
 import BinTools from '../../utils/bintools';
-import { PlatformConstants } from './types';
-import { PlatformKeyChain } from "./keychain";
-// import { Credential, SelectCredentialClass } from './credentials';
-// import { AVMKeyChain, AVMKeyPair } from './keychain';
+import { PlatformConstants, Signature } from './types';
+import { PlatformKeyChain, PlatformKeyPair } from "./keychain";
+import BN from "bn.js";
+import createHash from 'create-hash';
 
 /**
  * @ignore
@@ -34,13 +34,13 @@ export const SelectTxClass = (txtype:number, ...args:Array<any>):AddDefaultSubne
  * Class representing an add default subnet delegator transaction.
  */
 export class AddDefaultSubnetDelegatorTx {
-    protected nodeid:Buffer = Buffer.alloc(32);
+    protected nodeid:Buffer = Buffer.alloc(20);
     protected weight:Buffer = Buffer.alloc(8);
     protected startTime:Buffer = Buffer.alloc(8);
     protected endTime:Buffer = Buffer.alloc(8);
     protected networkid:Buffer = Buffer.alloc(4);
     protected nonce:Buffer = Buffer.alloc(8);
-    protected destination:Buffer = Buffer.alloc(32);
+    protected destination:Buffer = Buffer.alloc(20);
 
     /**
      * Returns the id of the [[AddDefaultSubnetDelegatorTx]]
@@ -108,8 +108,8 @@ export class AddDefaultSubnetDelegatorTx {
      * @remarks assume not-checksummed
      */
     fromBuffer(bytes:Buffer, offset:number = 0):number {
-        this.nodeid = bintools.copyFrom(bytes, offset, offset + 32);
-        offset += 32;
+        this.nodeid = bintools.copyFrom(bytes, offset, offset + 20);
+        offset += 20;
         this.weight = bintools.copyFrom(bytes, offset, offset + 8);
         offset += 8;
         this.startTime = bintools.copyFrom(bytes, offset, offset + 8);
@@ -120,8 +120,8 @@ export class AddDefaultSubnetDelegatorTx {
         offset += 4;
         this.nonce = bintools.copyFrom(bytes, offset, offset + 8);
         offset += 8;
-        this.destination = bintools.copyFrom(bytes, offset, offset + 32);
-        offset += 32;
+        this.destination = bintools.copyFrom(bytes, offset, offset + 20);
+        offset += 20;
         return offset;
     }
 
@@ -143,29 +143,20 @@ export class AddDefaultSubnetDelegatorTx {
     }
 
     /**
-     * Takes the bytes of an [[UnsignedTx]] and returns an array of [[Credential]]s
+     * Takes the bytes of an [[UnsignedTx]] and returns a Signature
      * 
      * @param msg A Buffer for the [[UnsignedTx]] 
-     * @param kc An [[AVMKeyChain]] used in signing
+     * @param kc An [[PlatformKeyChain]] used in signing
      * 
-     * @returns An array of [[Credential]]s
+     * @returns A Signature
      */
-//     sign(msg:Buffer, kc:AVMKeyChain):Array<Credential> {
-//         let sigs:Array<Credential> = [];
-//         for(let i = 0; i < this.ins.length; i++) {
-//             let cred:Credential = SelectCredentialClass(this.ins[i].getInput().getCredentialID());
-//             let sigidxs:Array<SigIdx> = this.ins[i].getInput().getSigIdxs();
-//             for(let j = 0; j < sigidxs.length; j++) {
-//                 let keypair:AVMKeyPair = kc.getKey(sigidxs[j].getSource());
-//                 let signval:Buffer = keypair.sign(msg);
-//                 let sig:Signature = new Signature();
-//                 sig.fromBuffer(signval);
-//                 cred.addSignature(sig);
-//             }
-//             sigs.push(cred);
-//         }
-//         return sigs;
-//     }
+
+    sign(msg:Buffer, keypair:PlatformKeyPair):Signature {
+        let signval:Buffer = keypair.sign(msg);
+        let sig:Signature = new Signature();
+        sig.fromBuffer(signval);
+        return sig;
+    }
 
     /**
      * Class representing an AddDefaultSubnetDelegatorTx.
@@ -180,21 +171,21 @@ export class AddDefaultSubnetDelegatorTx {
      */
 
     constructor(
-        nodeid:Buffer = Buffer.alloc(32), 
+        nodeid:string = "", 
         weight:number = 0, 
         startTime:number = 0, 
         endTime:number = 0, 
         networkid:number = 0, 
         nonce:number = 0,
-        destination:Buffer = Buffer.alloc(32)
+        destination:string = "" 
     ) {
-        this.nodeid = nodeid;
-        this.weight.writeUInt32BE(weight, 0);
-        this.startTime.writeUInt32BE(startTime, 0);
-        this.endTime.writeUInt32BE(endTime, 0);
+        this.nodeid = bintools.avaDeserialize(nodeid);
+        this.weight = bintools.fromBNToBuffer(new BN(weight), 8);
+        this.startTime = bintools.fromBNToBuffer(new BN(startTime), 8);
+        this.endTime = bintools.fromBNToBuffer(new BN(endTime), 8);
         this.networkid.writeUInt32BE(networkid, 0);
-        this.nonce.writeUInt32BE(nonce, 0);
-        this.destination = destination;
+        this.nonce = bintools.fromBNToBuffer(new BN(nonce), 8);
+        this.destination = bintools.avaDeserialize(destination);
     }
 }
 
@@ -209,32 +200,32 @@ export class UnsignedAddDefaultSubnetDelegatorTx {
     }
 
     fromBuffer(bytes:Buffer, offset:number = 0):number {
-        let txtype:number = bintools.copyFrom(bytes, offset, offset + 4).readUInt32BE(0);
+        const txtype:number = bintools.copyFrom(bytes, offset, offset + 4).readUInt32BE(0);
         offset += 4;
         this.transaction = SelectTxClass(txtype);
         return this.transaction.fromBuffer(bytes, offset);
     }
 
+
     toBuffer():Buffer {
-        let txtype:Buffer = Buffer.alloc(4);
+        const txtype:Buffer = Buffer.alloc(4);
         txtype.writeUInt32BE(this.transaction.getTxType(), 0);
-        let basebuff = this.transaction.toBuffer();
+        const basebuff:Buffer = this.transaction.toBuffer();
         return Buffer.concat([txtype, basebuff], txtype.length + basebuff.length);
     }
 
     /**
-     * Signs this [[UnsignedTx]] and returns signed [[Tx]]
+     * Signs this [[UnsignedAddDefaultSubnetDelegatorTx]] and returns signed [[Tx]]
      * 
      * @param kc An [[PlatformKeyChain]] used in signing
      * 
      * @returns A signed [[Tx]]
      */
-    sign(kc:PlatformKeyChain):Tx {
-        let txbuff = this.toBuffer();
-        // let msg:Buffer = Buffer.from(createHash('sha256').update(txbuff).digest()); 
-        // let sigs:Array<Credential> = this.transaction.sign(msg, kc);
-        let sigs:Array<Credential> = [];
-        return new Tx(this, sigs);
+    sign(keypair:PlatformKeyPair):PlatformTx {
+        const txbuff:Buffer = this.toBuffer();
+        const msg:Buffer = Buffer.from(createHash('sha256').update(txbuff).digest()); 
+        const signature:Signature = this.transaction.sign(msg, keypair);
+        return new PlatformTx(this, signature);
     }
 
     constructor(transaction:AddDefaultSubnetDelegatorTx = undefined) {
@@ -245,9 +236,9 @@ export class UnsignedAddDefaultSubnetDelegatorTx {
 /**
  * Class representing a signed transaction.
  */
-export class Tx {
+export class PlatformTx {
     protected unsignedTx:UnsignedAddDefaultSubnetDelegatorTx = new UnsignedAddDefaultSubnetDelegatorTx();
-    protected credentials:Array<Credential> = [];
+    protected signature:Signature;
 
     /**
      * Takes a {@link https://github.com/feross/buffer|Buffer} containing an [[Tx]], parses it, populates the class, and returns the length of the Tx in bytes.
@@ -260,16 +251,6 @@ export class Tx {
     fromBuffer(bytes:Buffer, offset:number = 0):number {
         this.unsignedTx = new UnsignedAddDefaultSubnetDelegatorTx();
         offset = this.unsignedTx.fromBuffer(bytes, offset);
-        let numcreds:number = bintools.copyFrom(bytes, offset, offset + 4).readUInt32BE(0);
-        offset += 4;
-        this.credentials = [];
-        // for(let i = 0; i < numcreds; i++) {
-        //     let credid:number = bintools.copyFrom(bytes, offset, offset + 4).readUInt32BE(0);
-        //     offset += 4;
-        //     let cred:Credential = SelectCredentialClass(credid);
-        //     offset = cred.fromBuffer(bytes, offset);
-        //     this.credentials.push(cred);
-        // }
         return offset;
     }
 
@@ -277,22 +258,10 @@ export class Tx {
      * Returns a {@link https://github.com/feross/buffer|Buffer} representation of the [[Tx]].
      */
     toBuffer():Buffer {
-        let txbuff:Buffer = this.unsignedTx.toBuffer();
-        let bsize:number = txbuff.length;
-        let credlen:Buffer = Buffer.alloc(4);
-        credlen.writeUInt32BE(this.credentials.length, 0);
-        let barr:Array<Buffer> = [txbuff, credlen];
-        bsize += credlen.length;
-        // for(let i = 0; i < this.credentials.length; i++) {
-        //     let credid:Buffer = Buffer.alloc(4);
-        //     credid.writeUInt32BE(this.credentials[i].getCredentialID(), 0);
-        //     barr.push(credid);
-        //     bsize += credid.length;
-        //     let credbuff:Buffer = this.credentials[i].toBuffer();
-        //     bsize += credbuff.length;
-        //     barr.push(credbuff)
-        // }
-        let buff:Buffer = Buffer.concat(barr, bsize);
+        const txbuff:Buffer = this.unsignedTx.toBuffer();
+        const bsize:number = txbuff.length + this.signature.toBuffer().length;
+        const barr:Array<Buffer> = [txbuff, this.signature.toBuffer()];
+        const buff:Buffer = Buffer.concat(barr, bsize);
         return buff;
     }
 
@@ -323,15 +292,13 @@ export class Tx {
     /**
      * Class representing a signed transaction.
      * 
-     * @param unsignedTx Optional [[UnsignedTx]]
-     * @param signatures Optional array of [[Credential]]s
+     * @param unsignedTx [[UnsignedAddDefaultSubnetDelegatorTx]]
+     * @param signature Signature
      */
-    constructor(unsignedTx:UnsignedAddDefaultSubnetDelegatorTx = undefined, credentials:Array<Credential> = undefined) {
+    constructor(unsignedTx:UnsignedAddDefaultSubnetDelegatorTx = undefined, signature:Signature = undefined) {
         if(typeof unsignedTx !== 'undefined'){
             this.unsignedTx = unsignedTx;
-            if(typeof credentials !== 'undefined'){
-                this.credentials = credentials
-            }
+            this.signature = signature;
         }
     }
 }

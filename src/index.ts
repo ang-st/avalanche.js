@@ -138,7 +138,7 @@ export {
 } from './apis/avm/types';
 export { UTXO, UTXOSet } from './apis/avm/utxos';
 
-export {AddDefaultSubnetDelegatorTx, UnsignedAddDefaultSubnetDelegatorTx} from './apis/platform/tx';
+export {AddDefaultSubnetDelegatorTx, UnsignedAddDefaultSubnetDelegatorTx, PlatformTx } from './apis/platform/tx';
 export {PlatformKeyPair, PlatformKeyChain} from './apis/platform/keychain';
 
 export {AdminAPI as Admin};
