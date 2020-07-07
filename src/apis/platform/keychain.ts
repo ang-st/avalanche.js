@@ -2,21 +2,21 @@
  * @packageDocumentation
  * @module PlatformAPI-KeyChain
  */
-import {Buffer} from "buffer/";
+import { Buffer } from "buffer/";
 import * as elliptic from "elliptic";
-import BinTools from '../../utils/bintools';
 import createHash from "create-hash";
+import BinTools from '../../utils/bintools';
 import { KeyPair, KeyChain } from '../../utils/types';
 
 /**
  * @ignore
  */
-const EC = elliptic.ec;
+const EC: typeof elliptic.ec = elliptic.ec;
 
 /**
  * @ignore
  */
-const ec = new EC('secp256k1');
+const ec: elliptic.ec = new EC('secp256k1');
 
 /**
  * @ignore
@@ -31,14 +31,15 @@ const BN = ecparams.n.constructor;
 /**
  * @ignore
  */
-const bintools = BinTools.getInstance();
+const bintools: BinTools = BinTools.getInstance();
 
 
 /**
- * Class for representing a private and public keypair in the Platform. 
+ * Class for representing a private and public keypair on the Platform Chain. 
  */
 export class PlatformKeyPair extends KeyPair {
     protected keypair:elliptic.ec.KeyPair
+    protected entropy:Buffer;
 
     /**
      * @ignore
@@ -61,6 +62,7 @@ export class PlatformKeyPair extends KeyPair {
      * @param entropy Optional parameter that may be necessary to produce secure keys
      */
     generateKey = (entropy?:Buffer) => {
+        this.entropy = entropy;
         this.keypair = ec.genKeyPair();
 
         // doing hex translation to get Buffer class
@@ -80,7 +82,7 @@ export class PlatformKeyPair extends KeyPair {
         // doing hex translation to get Buffer class
         this.privk = Buffer.from(this.keypair.getPrivate("hex"), "hex");
         this.pubk = Buffer.from(this.keypair.getPublic(true, "hex"), "hex");
-        return true; //silly I know, but the interface requires so it returns true on success, so if Buffer fails validation...
+        return true;
     }
 
     /**
@@ -110,7 +112,6 @@ export class PlatformKeyPair extends KeyPair {
      * @returns A {@link https://github.com/feross/buffer|Buffer} for the address of the public key.
      */
     addressFromPublicKey = (pubk:Buffer): Buffer => {
-        let address:string = "";
         if(pubk.length == 65) {
             /* istanbul ignore next */
             pubk = Buffer.from(ec.keyFromPublic(pubk).getPublic(true, "hex"), "hex"); //make compact, stick back into buffer
@@ -119,8 +120,6 @@ export class PlatformKeyPair extends KeyPair {
             let sha256:Buffer = Buffer.from(createHash('sha256').update(pubk).digest());
             let ripesha:Buffer = Buffer.from(createHash('rmd160').update(sha256).digest());
             return ripesha;
-            //address = bintools.avaSerialize(ripesha);
-            //return address;
         }
         /* istanbul ignore next */
         throw new Error("Unable to make address.");
